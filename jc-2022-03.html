@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>JC 2022 03</title>
+	</head>
+
+	<style>
+		:root {
+			--color-text: #bfbdb6;
+			--color-background: #10141c;
+			--color-background2: #30343c;
+			--color-border: #474d56;
+			--color-error:  #f26d78;
+			--color-selected: #670033;
+		}
+
+		input {
+			color: inherit;
+			background-color: inherit;
+		}
+
+		input:focus {
+			color: inherit;
+			background-color: inherit;
+		}
+
+		/* Scrollbars */
+		::-webkit-scrollbar {
+			width: 15px;
+		}
+
+		::-webkit-scrollbar-track,
+		::-webkit-scrollbar-corner {
+			background: var(--color-background);
+		}
+
+		::-webkit-scrollbar-thumb {
+			background: var(--color-border);
+		}
+
+		::-webkit-scrollbar-thumb:hover {
+			background: var(--color-selected);
+		}
+
+		html,
+		html * {
+			scrollbar-color: var(--color-border) var(--color-background);
+			scrollbar-width: thin;
+		}
+	</style>
+
+	<body style="
+      background-color: var(--color-background);
+      color: var(--color-text);
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size:  x-large;
+    ">
+		<div id="main"></div>
+	</body>
+
+	<script type="module" src="jc-2022-03.js"></script>
+</html>
