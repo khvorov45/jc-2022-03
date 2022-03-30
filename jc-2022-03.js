@@ -50,6 +50,7 @@ const createDomInput = () => document.createElement("input")
 const createSlider = (name, val, min, max, onChange, onClick) => {
 	let container = createDomDiv()
 	container.style.margin = "5px"
+	container.style.width = "250px"
 
 	let label = addDomTo(container, createDomDiv)
 	label.style.display = "flex"
@@ -180,6 +181,7 @@ const createLine = (x1, x2, y1, y2, col) => {
 	setSvgAttribute(line, "y1", y1)
 	setSvgAttribute(line, "y2", y2)
 	setSvgAttribute(line, "stroke", col)
+	setSvgAttribute(line, "stroke-width", 2.5)
 	return line
 }
 
@@ -376,13 +378,16 @@ const createFullORPlot = () => {
 		data: {t: 20, l: 20, r: 20, b: 20},
 	}
 
+	let xAxisMin = 0
+	let xAxisMax = 1
+
 	let axisLabCol = "#bbbbbb"
 
 	let scaleX = (val) => scale(val, 0, 1, pads.axis.l + pads.data.l, width - pads.axis.r - pads.data.r)
 	let scaleY = (val) => scale(val, 0, 1, height - pads.axis.b - pads.data.b, pads.axis.t + pads.data.t)
 
 	addDomTo(plot, createPlotGrid, arrSeq(0, 1, 0.1), arrSeq(0, 1, 0.1), scaleX, scaleY)
-	let xlab = "p"
+	let xlab = "pInfUnvac"
 	const addXLab = () => {
 		let el = addDomTo(
 			plot, createSvgText, scaleX(0.5), height - pads.axis.b + 10,
@@ -392,23 +397,31 @@ const createFullORPlot = () => {
 	}
 	let xlabEl = addXLab()
 
-	let veInf = 0.40
-	let veSympt = 0
-	let veLineCol = "#bbbb11"
+	let params = {}
+	params.veInf = 0.40
+	params.veSympt = 0
+	params.vacCoverage = 0.4
+	params.pInfUnvac = 0.1
+	params.pSymptUnvac = 1
+	params.pOther = 0.3
+	params.sens = 1
+	params.spec = 1
+
+	let veLineCol = "#bbbbbb"
 
 	const getVE = (veInf, veSympt) => 1 - (1 - veInf) * (1 - veSympt)
 
 	const addVELine = () => {
 		let line = null
-		let veTrue = getVE(veInf, veSympt)
+		let veTrue = getVE(params.veInf, params.veSympt)
 		if (xlab === "veInf") {
 			line = addDomTo(
-				plot, createLabelledFunLine, 0, 1, (veInf) => getVE(veInf, veSympt),
+				plot, createLabelledFunLine, 0, 1, (veInf) => getVE(veInf, params.veSympt),
 				scaleX, scaleY, veLineCol, "ve",
 			)
 		} else if (xlab === "veSympt") {
 			line = addDomTo(
-				plot, createLabelledFunLine, 0, 1, (veSympt) => getVE(veInf, veSympt),
+				plot, createLabelledFunLine, 0, 1, (veSympt) => getVE(params.veInf, veSympt),
 				scaleX, scaleY, veLineCol, "ve",
 			)
 		} else {
@@ -419,87 +432,85 @@ const createFullORPlot = () => {
 
 	let veLineEl = addVELine()
 
+	const getExpectedProportions = (params) => {
+		let veInf = params.veInf
+		let veSympt = params.veSympt
+		let v = params.vacCoverage
+		let pInf = params.pInfUnvac
+		let pSympt = params.pSymptUnvac
+		let pOther = params.pOther
 
-	const veCCFunFull = (veInf, veSympt, p, v, sens, spec) => {
-		let ve = getVE(veInf, veSympt)
+		let pVacInf = pInf * (1 - veInf)
+		let pVacSympt = pSympt * (1 - veSympt)
 
-		let pVac = p * (1 - ve)
+		let caseVac = v * pVacInf * (pVacSympt + (1 - pVacSympt) * pOther)
+		let caseUnvac = (1 - v) * pInf * (pSympt + (1 - pSympt) * pOther)
 
-		let vo = v * pVac
-		let vn = v * (1 - pVac)
-		let uo = (1 - v) * p
-		let un = (1 - v) * (1 - p)
+		let controlCommunityVac = v * (1 - pOther) * (1 - pVacInf * pVacSympt)
+		let controlCommunityUnvac = (1 - v) * (1 - pOther) * (1 - pInf * pSympt)
 
-		let voMiss = vo * sens + vn * (1 - spec)
-		let vnMiss = vn * spec + vo * (1 - sens)
-		let uoMiss = uo * sens + un * (1 - spec)
-		let unMiss = un * spec + uo * (1 - sens)
+		let controlNegVac = v * pOther * (1 - pVacInf)
+		let controlNegUnvac = (1 - v) * pOther * (1 - pInf)
 
-		let or = (voMiss * unMiss) / (vnMiss * uoMiss)
-		let veCC = 1 - or
-		return veCC
-	}
-
-	const veTNFunFull = (veInf, veSympt, p, v, sens, spec) => {
-		let ve = getVE(veInf, veSympt)
-
-		let pOther = 0.3
-		let pVac = p * (1 - ve)
-
-		let vo = v * pVac
-		let vn = v * pOther
-		let uo = (1 - v) * p
-		let un = (1 - v) * pOther
-
-		let voMiss = vo * sens + vn * (1 - spec)
-		let vnMiss = vn * spec + vo * (1 - sens)
-		let uoMiss = uo * sens + un * (1 - spec)
-		let unMiss = un * spec + uo * (1 - sens)
-
-		let or = (voMiss * unMiss) / (vnMiss * uoMiss)
-		let veCC = 1 - or
-		return veCC
-	}
-
-	let pUnvac = 0.1
-	let vacCoverage = 0.4
-	let sens = 1
-	let spec = 1
-
-	const veCCFunVEInf = (veInf) => veCCFunFull(veInf, veSympt, pUnvac, vacCoverage, sens, spec)
-	const veCCFunP = (p) => veCCFunFull(veInf, veSympt, p, vacCoverage, sens, spec)
-
-	const veTNFunVEInf = (veInf) => veTNFunFull(veInf, veSympt, pUnvac, vacCoverage, sens, spec)
-	const veTNFunP = (p) => veTNFunFull(veInf, veSympt, p, vacCoverage, sens, spec)
-
-	let xAxisSettings = {
-		veInf: {
-			veInfCCFun: veCCFunVEInf,
-			veInfTNFun: veTNFunVEInf,
-		},
-		p: {
-			veInfCCFun: veCCFunP,
-			veInfTNFun: veTNFunP,
+		return {
+			caseVac: caseVac,
+            caseUnvac: caseUnvac,
+            controlCommunityVac: controlCommunityVac,
+            controlCommunityUnvac: controlCommunityUnvac,
+            controlNegVac: controlNegVac,
+            controlNegUnvac: controlNegUnvac,
 		}
 	}
 
-	let veCCLineCol = "#aaaaaa"
-	let addVECCLine = () => {
+	const getVEFrom2x2 = (vo, vn, uo, un, sens, spec) => {
+		let voMiss = vo * sens + vn * (1 - spec)
+		let vnMiss = vn * spec + vo * (1 - sens)
+		let uoMiss = uo * sens + un * (1 - spec)
+		let unMiss = un * spec + uo * (1 - sens)
+		let or = (voMiss * unMiss) / (vnMiss * uoMiss)
+		let veEst = 1 - or
+		return veEst
+	}
+
+	const veCCFunFull = (params) => {
+		let props = getExpectedProportions(params)
+		let veEst = getVEFrom2x2(
+			props.caseVac, props.controlCommunityVac, props.caseUnvac, props.controlCommunityUnvac,
+			params.sens, params.spec
+		)
+		return veEst
+	}
+
+	const veTNFunFull = (params) => {
+		let props = getExpectedProportions(params)
+		let veEst = getVEFrom2x2(
+			props.caseVac, props.controlNegVac, props.caseUnvac, props.controlNegUnvac,
+			params.sens, params.spec
+		)
+		return veEst
+	}
+
+	const veFunOne = (val, fun) => {
+		let paramsCopy = {...params}
+		paramsCopy[xlab] = val
+		let result = fun(paramsCopy)
+		return result
+	}
+
+	const addVEEstLine = (fun, col, lbl) => {
 		let line = addDomTo(
-			plot, createLabelledFunLine, 0.001, 1,
-			xAxisSettings[xlab].veInfCCFun, scaleX, scaleY, veCCLineCol, "ve(cc)"
+			plot, createLabelledFunLine, clamp(xAxisMin, 0.001, xAxisMax), clamp(xAxisMax, xAxisMin, 0.999),
+			(val) => veFunOne(val, fun), 
+			scaleX, scaleY, col, lbl
 		)
 		return line
 	}
 
+	let veCCLineCol = "#61de2a"
 	let veTNLineCol = "#ff69b4"
-	let addVETNLine = () => {
-		let line = addDomTo(
-			plot, createLabelledFunLine, 0.001, 1,
-			xAxisSettings[xlab].veInfTNFun, scaleX, scaleY, veTNLineCol, "ve(tn)"
-		)
-		return line
-	}
+	
+	let addVECCLine = () => addVEEstLine(veCCFunFull, veCCLineCol, "ve(cc)")
+	let addVETNLine = () => addVEEstLine(veTNFunFull, veTNLineCol, "ve(tn)")
 
 	let veCCLineEl = addVECCLine()
 	let veTNLineEl = addVETNLine()
@@ -516,7 +527,7 @@ const createFullORPlot = () => {
 	}
 
 	const changeXLab = (newXLab) => {
-		if (xlab !== newXLab && arrLinSearch(Object.keys(xAxisSettings), newXLab)) {
+		if (xlab !== newXLab) {
 			xlab = newXLab
 			redraw()
 			for (let slider of Object.values(sliders)) {
@@ -533,36 +544,32 @@ const createFullORPlot = () => {
 
 	let sliders = {}
 
-	sliders["veInf"] = addDomTo(
-		slidersContainer, createSlider, "veInf", veInf, 0.001, 1,
-		(newVal) => { veInf = newVal; redraw() },
-		() => { changeXLab("veInf"); }
-	)
+	const addSlider = (name, min, max) => {
+		sliders[name] = addDomTo(
+			slidersContainer, createSlider, name, params[name], min, max,
+			(newVal) => { params[name] = newVal; redraw() },
+			() => { changeXLab(name); },
+		)
+	}
 
-	sliders["veSympt"] = addDomTo(
-		slidersContainer, createSlider, "veSympt", veSympt, 0.001, 1,
-		(newVal) => { veSympt = newVal; redraw() },
-		() => { changeXLab("veSympt"); }
-	)
+	addSlider("veInf", 0.001, 1)
+	addSlider("veSympt", 0.001, 1)
+	addSlider("vacCoverage", 0.00001, 0.9999)
+	addSlider("pInfUnvac", 0.00001, 0.5)
+	addSlider("pSymptUnvac", 0.00001, 0.5)
+	addSlider("pOther", 0.00001, 0.5)
+	addSlider("sens", 0.5, 1)
+	addSlider("spec", 0.5, 1)
 
-	sliders["p"] = addDomTo(
-		slidersContainer, createSlider, "p", pUnvac, 0, 1,
-		(newVal) => {pUnvac = newVal; redraw() },
-		() => { changeXLab("p") }
-	)
-
-	sliders["sens"] = addDomTo(
-		slidersContainer, createSlider, "sens", sens, 0.5, 1,
-		(newVal) => { sens = newVal; redraw() },
-	)
-
-	sliders["spec"] = addDomTo(
-		slidersContainer, createSlider, "spec", spec, 0.5, 1,
-		(newVal) => { spec = newVal; redraw() },
-	)
+	window.addEventListener("keydown", (e) => {
+		console.log(e.key)
+		switch (e.key) {
+		case ",": {xAxisMin = clamp(xAxisMin + 0.1, 0, xAxisMax - 0); redraw()}; break
+		case ".": {xAxisMax = clamp(xAxisMax - 0.1, xAxisMin + 0, 1); redraw()}; break
+		}
+	})
 
 	sliders[xlab].style.background = "var(--color-selected)"
-
 	return container
 }
 
@@ -762,7 +769,6 @@ const slideBack = () => switchInSlide(globalState.slideState[globalState.current
 // NOTE(sen) Init
 {
 	globalState.domMain.appendChild(globalState.slides[globalState.currentSlide])
-	//window.onclick = nextSlide
 	window.onkeydown = (e) => {
 		switch (e.key) {
 		case "ArrowRight": { nextSlide() } break;
