@@ -429,16 +429,16 @@ const createFullORPlot = () => {
 		let veTrue = getVE(params.veInf, params.veSympt)
 		if (xlab === "veInf") {
 			line = addDomTo(plot, createLabelledFunLine(
-				0, 1, (veInf) => getVE(veInf, params.veSympt),
+				xAxisMin, xAxisMax, (veInf) => getVE(veInf, params.veSympt),
 				scaleX, scaleY, veLineCol, "ve",
 			))
 		} else if (xlab === "veSympt") {
 			line = addDomTo(plot, createLabelledFunLine(
-				0, 1, (veSympt) => getVE(params.veInf, veSympt),
+				xAxisMin, xAxisMax, (veSympt) => getVE(params.veInf, veSympt),
 				scaleX, scaleY, veLineCol, "ve",
 			))
 		} else {
-			line = addDomTo(plot, createLabelledHLine(scaleX(0), scaleX(1), scaleY(veTrue), veLineCol, "ve"))
+			line = addDomTo(plot, createLabelledHLine(scaleX(xAxisMin), scaleX(xAxisMax), scaleY(veTrue), veLineCol, "ve"))
 		}
 		return line
 	}
@@ -576,8 +576,10 @@ const createFullORPlot = () => {
 
 	window.addEventListener("keydown", (e) => {
 		switch (e.key) {
-		case ",": {xAxisMin = clamp(xAxisMin + 0.1, 0, xAxisMax - 0); redraw()}; break
-		case ".": {xAxisMax = clamp(xAxisMax - 0.1, xAxisMin + 0, 1); redraw()}; break
+		case ",": {xAxisMin = clamp(xAxisMin + 0.1, 0, xAxisMax - 0.1); redraw()}; break
+		case "<": {xAxisMin = clamp(xAxisMin - 0.1, 0, xAxisMax - 0.1); redraw()}; break
+		case ".": {xAxisMax = clamp(xAxisMax - 0.1, xAxisMin + 0.1, 1); redraw()}; break
+		case ">": {xAxisMax = clamp(xAxisMax + 0.1, xAxisMin + 0.1, 1); redraw()}; break
 		}
 	})
 
