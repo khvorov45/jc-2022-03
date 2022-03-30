@@ -52,15 +52,15 @@ const createSlider = (name, val, min, max, onChange, onClick) => {
 	container.style.margin = "5px"
 	container.style.width = "250px"
 
-	let label = addDomTo(container, createDomDiv)
+	let label = addDomTo(container, createDomDiv())
 	label.style.display = "flex"
 	label.style.cursor = "pointer"
 	label.onclick = onClick
 
-	let labelText = addDomTo(label, createDomDiv)
+	let labelText = addDomTo(label, createDomDiv())
 	labelText.innerHTML = `${name}: ${val.toFixed(2)}`
 
-	let slider = addDomTo(container, createDomInput)
+	let slider = addDomTo(container, createDomInput())
 	slider.type = "range"
 	slider.min = min * 100
 	slider.max = max * 100
@@ -144,7 +144,7 @@ const createTableRow = (cells) => {
 	row.style.display = "flex"
 	row.style.flexDirection = "row"
 	for (let cell of cells) {
-		let domCell = addDomTo(row, createTableCell, cell)
+		let domCell = addDomTo(row, createTableCell(cell))
 	}
 	return row
 }
@@ -154,7 +154,7 @@ const createTableFromRows = (rows) => {
 	table.style.display = "flex"
 	table.style.flexDirection = "column"
 	for (let row of rows) {
-		let domRow = addDomTo(table, createTableRow, row)
+		let domRow = addDomTo(table, createTableRow(row))
 	}
 	return table
 }
@@ -190,8 +190,8 @@ const createHLine = (x1, x2, y, col) => createLine(x1, x2, y, y, col)
 
 const createLabelledLine = (x1, x2, y1, y2, col, lab) => {
 	let container = createSvgElement("g")
-	addDomTo(container, createLine, x1, x2, y1, y2, col)
-	addDomTo(container, createSvgText, x2, y2, lab, col, "start", "middle")
+	addDomTo(container, createLine(x1, x2, y1, y2, col))
+	addDomTo(container, createSvgText(x2, y2, lab, col, "start", "middle"))
 	return container
 }
 
@@ -208,20 +208,20 @@ const createFunLine = (from, to, fun, scaleX, scaleY, col) => {
 		let currentScaled = scaleX(current)
 		let currentY = fun(current)
 		let currentYScaled = scaleY(currentY)
-		addDomTo(container, createLine, last, currentScaled, lastY, currentYScaled, col)
+		addDomTo(container, createLine(last, currentScaled, lastY, currentYScaled, col))
 		last = currentScaled
 		lastY = currentYScaled
 	}
 	if (current !== from) {
-		addDomTo(container, createLine, last, scaleX(to), lastY, scaleY(fun(to)), col)
+		addDomTo(container, createLine(last, scaleX(to), lastY, scaleY(fun(to)), col))
 	}
 	return container
 }
 
 const createLabelledFunLine = (from, to, fun, scaleX, scaleY, col, lab) => {
 	let container = createSvgElement("g")
-	addDomTo(container, createFunLine, from, to, fun, scaleX, scaleY, col)
-	addDomTo(container, createSvgText, scaleX(to), scaleY(fun(to)), lab, col, "start", "middle")
+	addDomTo(container, createFunLine(from, to, fun, scaleX, scaleY, col))
+	addDomTo(container, createSvgText(scaleX(to), scaleY(fun(to)), lab, col, "start", "middle"))
 	return container
 }
 
@@ -249,24 +249,24 @@ const createPlotGrid = (xTicks, yTicks, scaleX, scaleY) => {
 	let gridBottom = scaleY(yTicks[0])
 	for (let xTick of xTicks) {
 		let xTickCoord = scaleX(xTick)
-		addDomTo(container, createVLine, xTickCoord, gridTop, gridBottom, gridCol)
-		addDomTo(container, createVLine, xTickCoord, gridBottom, gridBottom + tickLength, tickCol)
-		addDomTo(
-			container, createSvgText, xTickCoord, gridBottom + tickLength * 2,
+		addDomTo(container, createVLine(xTickCoord, gridTop, gridBottom, gridCol))
+		addDomTo(container, createVLine(xTickCoord, gridBottom, gridBottom + tickLength, tickCol))
+		addDomTo(container, createSvgText(
+			xTickCoord, gridBottom + tickLength * 2,
 			xTick.toFixed(1), textCol, "middle", "hanging"
-		)
+		))
 	}
 
 	let gridLeft = scaleX(xTicks[0])
 	let gridRight = scaleX(arrLast(xTicks))
 	for (let yTick of yTicks) {
 		let yTickCoord = scaleY(yTick)
-		addDomTo(container, createHLine, gridLeft, gridRight, yTickCoord, gridCol)
-		addDomTo(container, createHLine, gridLeft - tickLength, gridLeft, yTickCoord, tickCol)
-		addDomTo(
-			container, createSvgText, gridLeft - tickLength * 2, yTickCoord,
+		addDomTo(container, createHLine(gridLeft, gridRight, yTickCoord, gridCol))
+		addDomTo(container, createHLine(gridLeft - tickLength, gridLeft, yTickCoord, tickCol))
+		addDomTo(container, createSvgText(
+			gridLeft - tickLength * 2, yTickCoord,
 			yTick.toFixed(1), textCol, "end", "middle"
-		)
+		))
 	}
 
 	return container
@@ -276,7 +276,7 @@ const createORPlot = () => {
 	let container = createDomDiv()
 	container.style.display = "flex"
 
-	let plot = addDomTo(container, createSvgElement, "svg")
+	let plot = addDomTo(container, createSvgElement("svg"))
 	plot.style.flexShrink = "0"
 	plot.style.display = "block"
 
@@ -296,23 +296,23 @@ const createORPlot = () => {
 	let scaleX = (val) => scale(val, 0, 1, pads.axis.l + pads.data.l, width - pads.axis.r - pads.data.r)
 	let scaleY = (val) => scale(val, 0, 1, height - pads.axis.b - pads.data.b, pads.axis.t + pads.data.t)
 
-	addDomTo(plot, createPlotGrid, arrSeq(0, 1, 0.1), arrSeq(0, 1, 0.1), scaleX, scaleY)
-	addDomTo(
-		plot, createSvgText, scaleX(0.5), height - pads.axis.b + 10,
+	addDomTo(plot, createPlotGrid(arrSeq(0, 1, 0.1), arrSeq(0, 1, 0.1), scaleX, scaleY))
+	addDomTo(plot, createSvgText(
+		scaleX(0.5), height - pads.axis.b + 10,
 		"p", axisLabCol, "middle", "hanging"
-	)
+	))
 
 	let veTrue = 0.40
 	let veLineCol = "#bbbb11"
 	let rrLineCol = "#11bbbb"
 
 	const addVELine = () => {
-		let line = addDomTo(plot, createLabelledHLine, scaleX(0), scaleX(1), scaleY(veTrue), veLineCol, "ve")
+		let line = addDomTo(plot, createLabelledHLine(scaleX(0), scaleX(1), scaleY(veTrue), veLineCol, "ve"))
 		return line
 	}
 
 	const addRRLine = () => {
-		let line = addDomTo(plot, createLabelledHLine, scaleX(0), scaleX(1), scaleY(1 - veTrue), rrLineCol, "rr")
+		let line = addDomTo(plot, createLabelledHLine(scaleX(0), scaleX(1), scaleY(1 - veTrue), rrLineCol, "rr"))
 		return line
 	}
 
@@ -336,7 +336,7 @@ const createORPlot = () => {
 
 	let orLineCol = "#aaaaaa"
 	let addORLine = () => {
-		let line = addDomTo(plot, createLabelledFunLine, 0.001, 1, orFunP, scaleX, scaleY, orLineCol, "or")
+		let line = addDomTo(plot, createLabelledFunLine(0.001, 1, orFunP, scaleX, scaleY, orLineCol, "or"))
 		return line
 	}
 
@@ -344,15 +344,17 @@ const createORPlot = () => {
 	let veLineEl = addVELine()
 	let rrLineEl = addRRLine()
 
-	let veSlider = addDomTo(container, createSlider, "ve", veTrue, 0, 1, (newVal) => {
-		plot.removeChild(veLineEl)
-		plot.removeChild(rrLineEl)
-		plot.removeChild(orLineEl)
-		veTrue = newVal
-		veLineEl = addVELine()
-		rrLineEl = addRRLine()
-		orLineEl = addORLine()
-	})
+	let veSlider = addDomTo(container, createSlider(
+		"ve", veTrue, 0, 1, (newVal) => {
+			plot.removeChild(veLineEl)
+			plot.removeChild(rrLineEl)
+			plot.removeChild(orLineEl)
+			veTrue = newVal
+			veLineEl = addVELine()
+			rrLineEl = addRRLine()
+			orLineEl = addORLine()
+		}
+	))
 
 	return container
 }
@@ -363,7 +365,7 @@ const createFullORPlot = () => {
 	container.style.flexDirection = "column"
 	container.style.alignItems = "center"
 
-	let plot = addDomTo(container, createSvgElement, "svg")
+	let plot = addDomTo(container, createSvgElement("svg"))
 	plot.style.flexShrink = "0"
 	plot.style.display = "block"
 
@@ -386,13 +388,13 @@ const createFullORPlot = () => {
 	let scaleX = (val) => scale(val, 0, 1, pads.axis.l + pads.data.l, width - pads.axis.r - pads.data.r)
 	let scaleY = (val) => scale(val, 0, 1, height - pads.axis.b - pads.data.b, pads.axis.t + pads.data.t)
 
-	addDomTo(plot, createPlotGrid, arrSeq(0, 1, 0.1), arrSeq(0, 1, 0.1), scaleX, scaleY)
+	addDomTo(plot, createPlotGrid(arrSeq(0, 1, 0.1), arrSeq(0, 1, 0.1), scaleX, scaleY))
 	let xlab = "pInfUnvac"
 	const addXLab = () => {
-		let el = addDomTo(
-			plot, createSvgText, scaleX(0.5), height - pads.axis.b + 10,
+		let el = addDomTo(plot, createSvgText(
+			scaleX(0.5), height - pads.axis.b + 10,
 			xlab, axisLabCol, "middle", "hanging"
-		)
+		))
 		return el
 	}
 	let xlabEl = addXLab()
@@ -415,17 +417,17 @@ const createFullORPlot = () => {
 		let line = null
 		let veTrue = getVE(params.veInf, params.veSympt)
 		if (xlab === "veInf") {
-			line = addDomTo(
-				plot, createLabelledFunLine, 0, 1, (veInf) => getVE(veInf, params.veSympt),
+			line = addDomTo(plot, createLabelledFunLine(
+				0, 1, (veInf) => getVE(veInf, params.veSympt),
 				scaleX, scaleY, veLineCol, "ve",
-			)
+			))
 		} else if (xlab === "veSympt") {
-			line = addDomTo(
-				plot, createLabelledFunLine, 0, 1, (veSympt) => getVE(params.veInf, veSympt),
+			line = addDomTo(plot, createLabelledFunLine(
+				0, 1, (veSympt) => getVE(params.veInf, veSympt),
 				scaleX, scaleY, veLineCol, "ve",
-			)
+			))
 		} else {
-			line = addDomTo(plot, createLabelledHLine, scaleX(0), scaleX(1), scaleY(veTrue), veLineCol, "ve")
+			line = addDomTo(plot, createLabelledHLine(scaleX(0), scaleX(1), scaleY(veTrue), veLineCol, "ve"))
 		}
 		return line
 	}
@@ -498,11 +500,11 @@ const createFullORPlot = () => {
 	}
 
 	const addVEEstLine = (fun, col, lbl) => {
-		let line = addDomTo(
-			plot, createLabelledFunLine, clamp(xAxisMin, 0.001, xAxisMax), clamp(xAxisMax, xAxisMin, 0.999),
+		let line = addDomTo(plot, createLabelledFunLine(
+			clamp(xAxisMin, 0.001, xAxisMax), clamp(xAxisMax, xAxisMin, 0.999),
 			(val) => veFunOne(val, fun), 
 			scaleX, scaleY, col, lbl
-		)
+		))
 		return line
 	}
 
@@ -545,11 +547,11 @@ const createFullORPlot = () => {
 	let sliders = {}
 
 	const addSlider = (name, min, max) => {
-		sliders[name] = addDomTo(
-			slidersContainer, createSlider, name, params[name], min, max,
+		sliders[name] = addDomTo(slidersContainer, createSlider(
+			name, params[name], min, max,
 			(newVal) => { params[name] = newVal; redraw() },
 			() => { changeXLab(name); },
-		)
+		))
 	}
 
 	addSlider("veInf", 0.001, 1)
@@ -562,7 +564,6 @@ const createFullORPlot = () => {
 	addSlider("spec", 0.5, 1)
 
 	window.addEventListener("keydown", (e) => {
-		console.log(e.key)
 		switch (e.key) {
 		case ",": {xAxisMin = clamp(xAxisMin + 0.1, 0, xAxisMax - 0); redraw()}; break
 		case ".": {xAxisMax = clamp(xAxisMax - 0.1, xAxisMin + 0, 1); redraw()}; break
@@ -573,13 +574,12 @@ const createFullORPlot = () => {
 	return container
 }
 
-const addDomTo = (parent, createDom, ...args) => {
-	let dom = createDom(...args)
-	parent.appendChild(dom)
-	return dom
+const addDomTo = (parent, node) => {
+	parent.appendChild(node)
+	return node
 }
 
-const addDomDivTo = (parent) => addDomTo(parent, createDomDiv)
+const addDomDivTo = (parent) => addDomTo(parent, createDomDiv())
 
 const removeChildren = (parent) => {
 	while (parent.lastChild) {
@@ -614,14 +614,14 @@ const addDomSlideWithTitle = (titleContent) => {
 	slideContent.style.flexDirection = "column"
 	slideContent.style.width = "90vw"
 	slideContent.style.height = "90vh"
-	let title = addDomTo(slideContent, createDomTitle, titleContent)
+	let title = addDomTo(slideContent, createDomTitle(titleContent))
 	title.style.marginBottom = "25px"
 	let mainContent = addDomDivTo(slideContent)
 	return mainContent
 }
 
 const addPointsToLastSlide = (parent, points) => {
-	addDomTo(parent, createPoints, points, arrLast(globalState.slidePoints))
+	addDomTo(parent, createPoints(points, arrLast(globalState.slidePoints)))
 }
 
 const addDomSlideWithTitleAndPoints = (title, points) => {
@@ -665,9 +665,10 @@ const slideBack = () => switchInSlide(globalState.slideState[globalState.current
 	let slide = addDomSlide()
 	let domTitleSubtitle = addDomTo(
 		slide,
-		createDomTitleSubtitle,
-		"Theoretical framework for Retrospective Studies of the Effectiveness of SARS-CoV-2 Vaccines",
-		"2022-03-23"
+		createDomTitleSubtitle(
+			"Theoretical framework for Retrospective Studies of the Effectiveness of SARS-CoV-2 Vaccines",
+			"2022-03-23",
+		)
 	)
 }
 
@@ -701,7 +702,7 @@ const slideBack = () => switchInSlide(globalState.slideState[globalState.current
 // NOTE(sen) Risk of vaccination
 {
 	let slide = addDomSlideWithTitle("Risk of vaccination")
-	addDomTo(slide, createTableClassic2x2)
+	addDomTo(slide, createTableClassic2x2())
 	addPointsToLastSlide(slide, [
 		"ro = vo / (vo + uo)",
 		"rn = vn / (vn + un)",
@@ -711,7 +712,7 @@ const slideBack = () => switchInSlide(globalState.slideState[globalState.current
 // NOTE(sen) Odds of vaccination
 {
 	let slide = addDomSlideWithTitle("Odds of vaccination")
-	addDomTo(slide, createTableClassic2x2)
+	addDomTo(slide, createTableClassic2x2())
 	addPointsToLastSlide(slide, [
 		"oo = vo / uo",
 		"on = vn / un",
@@ -760,9 +761,10 @@ const slideBack = () => switchInSlide(globalState.slideState[globalState.current
 	let slide = addDomSlide()
 	let domTitleSubtitle = addDomTo(
 		slide,
-		createDomTitleSubtitle,
-		"End of presentation",
-		""
+		createDomTitleSubtitle(
+			"End of presentation",
+			"",
+		),
 	)
 }
 
