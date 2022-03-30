@@ -200,21 +200,32 @@ const createLabelledHLine = (x1, x2, y, col, lab) => createLabelledLine(x1, x2, 
 
 const createFunLine = (from, to, fun, scaleX, scaleY, col) => {
 	const container = createSvgElement("g")
-	let last = scaleX(from)
-	let lastY = scaleY(fun(from))
-	let step = (to - from) / 100
-	let current = from + step
-	for (; current < to; current += step) {
-		let currentScaled = scaleX(current)
-		let currentY = fun(current)
-		let currentYScaled = scaleY(currentY)
-		addDomTo(container, createLine(last, currentScaled, lastY, currentYScaled, col))
-		last = currentScaled
-		lastY = currentYScaled
+
+	if (to !== from) {
+		if (to < from) {
+			let temp = to
+			to = from
+			from = temp
+		}
+
+		let last = scaleX(from)
+		let lastY = scaleY(fun(from))
+		let step = (to - from) / 100
+		let current = from + step
+		for (; current < to; current += step) {
+			let currentScaled = scaleX(current)
+			let currentY = fun(current)
+			let currentYScaled = scaleY(currentY)
+			addDomTo(container, createLine(last, currentScaled, lastY, currentYScaled, col))
+			last = currentScaled
+			lastY = currentYScaled
+		}
+
+		if (current !== from) {
+			addDomTo(container, createLine(last, scaleX(to), lastY, scaleY(fun(to)), col))
+		}
 	}
-	if (current !== from) {
-		addDomTo(container, createLine(last, scaleX(to), lastY, scaleY(fun(to)), col))
-	}
+
 	return container
 }
 
@@ -502,7 +513,7 @@ const createFullORPlot = () => {
 	const addVEEstLine = (fun, col, lbl) => {
 		let line = addDomTo(plot, createLabelledFunLine(
 			clamp(xAxisMin, 0.001, xAxisMax), clamp(xAxisMax, xAxisMin, 0.999),
-			(val) => veFunOne(val, fun), 
+			(val) => veFunOne(val, fun),
 			scaleX, scaleY, col, lbl
 		))
 		return line
@@ -510,7 +521,7 @@ const createFullORPlot = () => {
 
 	let veCCLineCol = "#61de2a"
 	let veTNLineCol = "#ff69b4"
-	
+
 	let addVECCLine = () => addVEEstLine(veCCFunFull, veCCLineCol, "ve(cc)")
 	let addVETNLine = () => addVEEstLine(veTNFunFull, veTNLineCol, "ve(tn)")
 
