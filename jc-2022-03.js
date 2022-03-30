@@ -19,8 +19,12 @@ const arrLinSearch = (arr, item) => {
 
 const arrSeq = (start, end, step) => {
 	let result = []
-	for (let current = start; current < end; current += step) {
+	let current = start
+	for (; current < end; current += step) {
 		result.push(current)
+	}
+	if (current <= end) {
+		result.push(end)
 	}
 	return result
 }
@@ -391,19 +395,24 @@ const createFullORPlot = () => {
 		data: {t: 20, l: 20, r: 20, b: 20},
 	}
 
-	let xAxisMin = 0
-	let xAxisMax = 1
+	let xAxisMin = 0.1
+	let xAxisMax = 0.5
 
 	let axisLabCol = "#bbbbbb"
 
-	let scaleX = (val) => scale(val, 0, 1, pads.axis.l + pads.data.l, width - pads.axis.r - pads.data.r)
-	let scaleY = (val) => scale(val, 0, 1, height - pads.axis.b - pads.data.b, pads.axis.t + pads.data.t)
+	let createScaleX = () => (val) => scale(val, xAxisMin, xAxisMax, pads.axis.l + pads.data.l, width - pads.axis.r - pads.data.r)
+	let scaleX = createScaleX()
 
-	addDomTo(plot, createPlotGrid(arrSeq(0, 1, 0.1), arrSeq(0, 1, 0.1), scaleX, scaleY))
+	let createScaleY = () => (val) => scale(val, 0, 1, height - pads.axis.b - pads.data.b, pads.axis.t + pads.data.t)
+	let scaleY = createScaleY()
+
+	let addPlotGrid = () => addDomTo(plot, createPlotGrid(arrSeq(xAxisMin, xAxisMax, 0.1), arrSeq(0, 1, 0.1), scaleX, scaleY))
+	let plotGridEl = addPlotGrid()
+
 	let xlab = "pInfUnvac"
 	const addXLab = () => {
 		let el = addDomTo(plot, createSvgText(
-			scaleX(0.5), height - pads.axis.b + 10,
+			scaleX((xAxisMax + xAxisMin) / 2), height - pads.axis.b + 10,
 			xlab, axisLabCol, "middle", "hanging"
 		))
 		return el
@@ -528,7 +537,7 @@ const createFullORPlot = () => {
 	let veCCLineEl = addVECCLine()
 	let veTNLineEl = addVETNLine()
 
-	const redraw = () => {
+	const redrawLines = () => {
 		plot.removeChild(veLineEl)
 		plot.removeChild(veCCLineEl)
 		plot.removeChild(veTNLineEl)
@@ -542,7 +551,7 @@ const createFullORPlot = () => {
 	const changeXLab = (newXLab) => {
 		if (xlab !== newXLab) {
 			xlab = newXLab
-			redraw()
+			redrawLines()
 			for (let slider of Object.values(sliders)) {
 				slider.style.background = "var(--color-background)"
 			}
@@ -560,7 +569,7 @@ const createFullORPlot = () => {
 	const addSlider = (name, min, max) => {
 		sliders[name] = addDomTo(slidersContainer, createSlider(
 			name, params[name], min, max,
-			(newVal) => { params[name] = newVal; redraw() },
+			(newVal) => { params[name] = newVal; redrawLines() },
 			() => { changeXLab(name); },
 		))
 	}
@@ -574,12 +583,22 @@ const createFullORPlot = () => {
 	addSlider("sens", 0.5, 1)
 	addSlider("spec", 0.5, 1)
 
+	const redrawLinesAndGrid = () => {
+		scaleX = createScaleX()
+		scaleY = createScaleY()
+		
+		plot.removeChild(plotGridEl)
+		plotGridEl = addPlotGrid()
+
+		redrawLines()
+	}
+
 	window.addEventListener("keydown", (e) => {
 		switch (e.key) {
-		case ",": {xAxisMin = clamp(xAxisMin + 0.1, 0, xAxisMax - 0.1); redraw()}; break
-		case "<": {xAxisMin = clamp(xAxisMin - 0.1, 0, xAxisMax - 0.1); redraw()}; break
-		case ".": {xAxisMax = clamp(xAxisMax - 0.1, xAxisMin + 0.1, 1); redraw()}; break
-		case ">": {xAxisMax = clamp(xAxisMax + 0.1, xAxisMin + 0.1, 1); redraw()}; break
+		case ",": {xAxisMin = clamp(xAxisMin + 0.1, 0, xAxisMax - 0.1); redrawLinesAndGrid()}; break
+		case "<": {xAxisMin = clamp(xAxisMin - 0.1, 0, xAxisMax - 0.1); redrawLinesAndGrid()}; break
+		case ".": {xAxisMax = clamp(xAxisMax - 0.1, xAxisMin + 0.1, 1); redrawLinesAndGrid()}; break
+		case ">": {xAxisMax = clamp(xAxisMax + 0.1, xAxisMin + 0.1, 1); redrawLinesAndGrid()}; break
 		}
 	})
 
