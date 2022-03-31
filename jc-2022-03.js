@@ -261,10 +261,10 @@ const createFunLine = (from, to, fun, scaleX, scaleY, ymin, ymax, col) => {
 	return container
 }
 
-const createLabelledFunLine = (from, to, fun, scaleX, scaleY, ymin, ymax, col, lab) => {
+const createLabelledFunLine = (from, to, fun, scaleX, scaleY, ymin, ymax, col, lab, vAlign) => {
 	let container = createSvgElement("g")
 	addDomTo(container, createFunLine(from, to, fun, scaleX, scaleY, ymin, ymax, col))
-	addDomTo(container, createSvgText(scaleX(to), scaleY(fun(to)), lab, col, "start", "middle"))
+	addDomTo(container, createSvgText(scaleX(to), scaleY(fun(to)), lab, col, "start", vAlign))
 	return container
 }
 
@@ -385,7 +385,7 @@ const createORPlot = () => {
 
 	let orLineCol = "#bbbb11"
 	let addORLine = () => {
-		let line = addDomTo(plot, createLabelledFunLine(0.001, 1, orFunP, scaleX, scaleY, 0, 1, orLineCol, "or"))
+		let line = addDomTo(plot, createLabelledFunLine(0.001, 1, orFunP, scaleX, scaleY, 0, 1, orLineCol, "or", "middle"))
 		return line
 	}
 
@@ -453,6 +453,7 @@ const createFullORPlot = () => {
 			scaleX((xAxisMax + xAxisMin) / 2), height - pads.axis.b + 10,
 			xlab, axisLabCol, "middle", "hanging"
 		))
+		el.style.fontFamily = "monospace"
 		return el
 	}
 	let xlabEl = addXLab()
@@ -483,17 +484,17 @@ const createFullORPlot = () => {
 		let line = null
 		let veTrue = getVE(params.veInf, params.veSympt)
 		if (xlab === "veInf") {
-			line = addDomTo(plot, createLabelledFunLine(
+			line = addDomTo(plot, createFunLine(
 				xAxisMin, xAxisMax, (veInf) => getVE(veInf, params.veSympt),
-				scaleX, scaleY, yAxisMin, yAxisMax, veLineCol, "ve",
+				scaleX, scaleY, yAxisMin, yAxisMax, veLineCol,
 			))
 		} else if (xlab === "veSympt") {
-			line = addDomTo(plot, createLabelledFunLine(
+			line = addDomTo(plot, createFunLine(
 				xAxisMin, xAxisMax, (veSympt) => getVE(params.veInf, veSympt),
-				scaleX, scaleY, yAxisMin, yAxisMax, veLineCol, "ve",
+				scaleX, scaleY, yAxisMin, yAxisMax, veLineCol,
 			))
 		} else {
-			line = addDomTo(plot, createLabelledHLine(scaleX(xAxisMin), scaleX(xAxisMax), scaleY(veTrue), veLineCol, "ve"))
+			line = addDomTo(plot, createHLine(scaleX(xAxisMin), scaleX(xAxisMax), scaleY(veTrue), veLineCol))
 		}
 		return line
 	}
@@ -570,11 +571,11 @@ const createFullORPlot = () => {
 		return result
 	}
 
-	const addVEEstLine = (fun, col, lbl) => {
+	const addVEEstLine = (fun, col, lbl, vAlign) => {
 		let line = addDomTo(plot, createLabelledFunLine(
 			clamp(xAxisMin, 0.001, xAxisMax), clamp(xAxisMax, xAxisMin, 0.999),
 			(val) => veFunOne(val, fun),
-			scaleX, scaleY, yAxisMin, yAxisMax, col, lbl
+			scaleX, scaleY, yAxisMin, yAxisMax, col, lbl, vAlign
 		))
 		return line
 	}
@@ -582,8 +583,8 @@ const createFullORPlot = () => {
 	let veCCLineCol = "#61de2a"
 	let veTNLineCol = "#ff69b4"
 
-	let addVECCLine = () => addVEEstLine(veCCFunFull, veCCLineCol, "ve(cc)")
-	let addVETNLine = () => addVEEstLine(veTNFunFull, veTNLineCol, "ve(tn)")
+	let addVECCLine = () => addVEEstLine(veCCFunFull, veCCLineCol, "cc", "hanging")
+	let addVETNLine = () => addVEEstLine(veTNFunFull, veTNLineCol, "tn", "text-bottom")
 
 	let veCCLineEl = addVECCLine()
 	let veTNLineEl = addVETNLine()
@@ -635,7 +636,7 @@ const createFullORPlot = () => {
 	addSlider("veSympt", 0.001, 1)
 	addSlider("vacCoverage", 0.00001, 0.9999)
 	addSlider("pInfUnvac", 0.00001, 0.5)
-	addSlider("pSymptUnvac", 0.00001, 0.5)
+	addSlider("pSymptUnvac", 0.00001, 1)
 	addSlider("pOther", 0.00001, 0.5)
 	addSlider("pHealthVac", 0.00001, 1)
 	addSlider("pHealthUnvac", 0.00001, 1)
