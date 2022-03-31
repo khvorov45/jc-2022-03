@@ -55,6 +55,7 @@ const createSlider = (name, val, min, max, onChange, onClick) => {
 	let container = createDomDiv()
 	container.style.margin = "5px"
 	container.style.width = "250px"
+	container.style.height = "80px"
 
 	let label = addDomTo(container, createDomDiv())
 	label.style.display = "flex"
@@ -62,6 +63,7 @@ const createSlider = (name, val, min, max, onChange, onClick) => {
 	label.onclick = onClick
 
 	let labelText = addDomTo(label, createDomDiv())
+	labelText.style.fontSize = "x-large"
 	labelText.innerHTML = `${name}: ${val.toFixed(2)}`
 
 	let slider = addDomTo(container, createDomInput())
@@ -92,7 +94,7 @@ let globalSlideTitleHeight = 50
 const createDomTitle = (title) => {
 	let domTitle = createDomDiv()
 	domTitle.innerHTML = title
-	domTitle.style.fontSize = "xx-large"
+	domTitle.style.fontSize = "xxx-large"
 	domTitle.style.display = "flex"
 	domTitle.style.alignItems = "center"
 	domTitle.style.textAlign = "center"
@@ -113,8 +115,8 @@ const createDomTitleSubtitle = (title, subtitle) => {
 
 	let domSubtitle = addDomDivTo(domContainer)
 	domSubtitle.innerHTML = subtitle
-	domSubtitle.fontSize = "large"
-	domSubtitle.textAlign = "center"
+	domSubtitle.style.fontSize = "xx-large"
+	domSubtitle.style.textAlign = "center"
 
 	return domContainer
 }
@@ -384,16 +386,17 @@ const createORPlot = () => {
 const createFullORPlot = () => {
 	let container = createDomDiv()
 	container.style.display = "flex"
-	container.style.flexDirection = "column"
+	container.style.flexDirection = "row"
 	container.style.alignItems = "center"
+	container.style.height = `calc(100vh - ${globalSlideTitleHeight}px)`
 
 	let plot = addDomTo(container, createSvgElement("svg"))
 	plot.style.flexShrink = "0"
 	plot.style.display = "block"
 
-	const getPlotWidth = () => window.innerWidth * 0.9
+	const getPlotWidth = () => window.innerWidth * 0.5
 	let width = getPlotWidth()
-	let height = 400
+	let height = 500
 	setSvgDim(plot, width, height)
 
 	let pads = {
@@ -580,8 +583,9 @@ const createFullORPlot = () => {
 	}
 
 	let slidersScrollContainer = addDomDivTo(container)
-	slidersScrollContainer.style.height = `calc(100vh - ${globalSlideTitleHeight + height}px)`
+	slidersScrollContainer.style.height = `100%`
 	slidersScrollContainer.style.overflowY = "scroll"
+	slidersScrollContainer.style.display = "flex"
 
 	let slidersContainer = addDomDivTo(slidersScrollContainer)
 	slidersContainer.style.display = "flex"
@@ -708,11 +712,13 @@ const addDomSlideWithTitle = (titleContent) => {
 }
 
 const addPointsToLastSlide = (parent, points) => {
-	addDomTo(parent, createPoints(points, arrLast(globalState.slidePoints)))
+	let pointsEl = addDomTo(parent, createPoints(points, arrLast(globalState.slidePoints)))
+	return pointsEl
 }
 
 const addDomSlideWithTitleAndPoints = (title, points) => {
 	let slide = addDomSlideWithTitle(title)
+	slide.style.marginTop = "50px"
 	addPointsToLastSlide(slide, points)
 }
 
@@ -788,7 +794,8 @@ const slideBack = () => switchInSlide(globalState.slideState[globalState.current
 // NOTE(sen) Risk of vaccination
 {
 	let slide = addDomSlideWithTitle("Risk of vaccination")
-	addDomTo(slide, createTableClassic2x2())
+	let table = addDomTo(slide, createTableClassic2x2())
+	table.style.marginTop = "50px"
 	addPointsToLastSlide(slide, [
 		"ro = vo / (vo + uo)",
 		"rn = vn / (vn + un)",
@@ -798,7 +805,8 @@ const slideBack = () => switchInSlide(globalState.slideState[globalState.current
 // NOTE(sen) Odds of vaccination
 {
 	let slide = addDomSlideWithTitle("Odds of vaccination")
-	addDomTo(slide, createTableClassic2x2())
+	let table = addDomTo(slide, createTableClassic2x2())
+	table.style.marginTop = "50px"
 	addPointsToLastSlide(slide, [
 		"oo = vo / uo",
 		"on = vn / un",
@@ -814,6 +822,7 @@ const slideBack = () => switchInSlide(globalState.slideState[globalState.current
 	let slide = addDomSlideWithTitle("OR properties (test-negative)")
 	let table = createTable2x2("v*p*(1-ve)", "v*k", "(1-v)*p", "(1-v)*k")
 	table.style.marginBottom = "20px"
+	table.style.marginTop = "50px"
 	addPointsToLastSlide(slide, [
 		table,
 		"or = 1-ve = rr",
