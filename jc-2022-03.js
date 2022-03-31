@@ -130,7 +130,6 @@ const createPoints = (points, store) => {
 			domPoint.appendChild(point)
 		}
 		domPoint.style.visibility = "hidden"
-		domPoint.style.visibility = "visible"
 		store.push(domPoint)
 	}
 	return container
@@ -662,10 +661,25 @@ const removeChildren = (parent) => {
 
 let globalState = {
 	domMain: document.getElementById("main"),
-	currentSlide: 8,
+	currentSlide: 0,
 	slides: [],
 	slideState: [],
 	slidePoints: [],
+}
+
+const loadGlobalState = () => {
+	let state = localStorage.getItem("globalState")
+	if (state !== null) {
+		state = JSON.parse(state)
+		globalState = Object.assign(globalState, state)
+	}
+}
+
+const storeGlobalState = () => {
+	let state = {}
+	state.currentSlide = globalState.currentSlide
+	state.slideState = globalState.slideState
+	localStorage.setItem("globalState", JSON.stringify(state))
 }
 
 const addDomSlide = () => {
@@ -704,11 +718,10 @@ const addDomSlideWithTitleAndPoints = (title, points) => {
 
 const switchToSlide = (index) => {
 	index = clamp(index, 0, globalState.slides.length - 1)
-	if (index !== globalState.currentSlide) {
-		globalState.currentSlide = index
-		removeChildren(globalState.domMain)
-		globalState.domMain.appendChild(globalState.slides[globalState.currentSlide])
-	}
+	globalState.currentSlide = index
+	removeChildren(globalState.domMain)
+	globalState.domMain.appendChild(globalState.slides[globalState.currentSlide])
+	switchInSlide(globalState.slideState[index])
 }
 
 const nextSlide = () => switchToSlide(globalState.currentSlide + 1)
@@ -717,17 +730,16 @@ const previousSlide = () => switchToSlide(globalState.currentSlide - 1)
 const switchInSlide = (slideState) => {
 	let slidePoints = globalState.slidePoints[globalState.currentSlide]
 	slideState = clamp(slideState, 0, slidePoints.length)
-	if (slideState !== globalState.slideState[globalState.currentSlide]) {
-		for (let childIndex = 0; childIndex < slideState; childIndex += 1) {
-			let child = slidePoints[childIndex]
-			child.style.visibility = "visible"
-		}
-		for (let childIndex = slideState; childIndex < slidePoints.length; childIndex += 1) {
-			let child = slidePoints[childIndex]
-			child.style.visibility = "hidden"
-		}
-		globalState.slideState[globalState.currentSlide] = slideState
+	for (let childIndex = 0; childIndex < slideState; childIndex += 1) {
+		let child = slidePoints[childIndex]
+		child.style.visibility = "visible"
 	}
+	for (let childIndex = slideState; childIndex < slidePoints.length; childIndex += 1) {
+		let child = slidePoints[childIndex]
+		child.style.visibility = "hidden"
+	}
+	globalState.slideState[globalState.currentSlide] = slideState
+	storeGlobalState()
 }
 
 const slideForward = () => switchInSlide(globalState.slideState[globalState.currentSlide] + 1)
@@ -845,7 +857,8 @@ const slideBack = () => switchInSlide(globalState.slideState[globalState.current
 
 // NOTE(sen) Init
 {
-	globalState.domMain.appendChild(globalState.slides[globalState.currentSlide])
+	loadGlobalState()
+	switchToSlide(globalState.currentSlide)
 	window.onkeydown = (e) => {
 		switch (e.key) {
 		case "ArrowRight": { nextSlide() } break;
