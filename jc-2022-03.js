@@ -425,7 +425,7 @@ const createFullORPlot = () => {
 	setSvgDim(plot, width, height)
 
 	let pads = {
-		axis: {t: 20, l: 20, r: 40, b: 30},
+		axis: {t: 20, l: 35, r: 40, b: 30},
 		data: {t: 20, l: 20, r: 20, b: 20},
 	}
 
@@ -456,6 +456,9 @@ const createFullORPlot = () => {
 		return el
 	}
 	let xlabEl = addXLab()
+
+	let yAxisLabEl = addDomTo(plot, createSvgText(0, 0, "VE", axisLabCol, "middle", "hanging"))
+	setSvgAttribute(yAxisLabEl, "transform", `translate(0, ${scaleY((yAxisMax + yAxisMin) / 2)}) rotate(-90)`)
 
 	let params = {}
 	params.veInf = 0.40
