@@ -62,7 +62,7 @@ const createSlider = (name, val, min, max, onChange, onClick) => {
 	label.style.cursor = "pointer"
 	label.onclick = onClick
 
-	let labelText = addDomTo(label, createDomDiv())
+	let labelText = addDomTo(label, document.createElement("code"))
 	labelText.style.fontSize = "x-large"
 	labelText.innerHTML = `${name}: ${val.toFixed(2)}`
 
@@ -139,37 +139,62 @@ const createPoints = (points, store) => {
 
 const createTableCell = (content) => {
 	let cell = createDomDiv()
-	cell.innerHTML = content
-	cell.style.width = "200px"
+	if (typeof content === "string") {
+		cell.innerHTML = content
+	} else {
+		cell.appendChild(content)
+	}
+	cell.style.width = "250px"
+	cell.style.overflow = "hidden"
+	cell.style.whiteSpace = "nowrap"
 	return cell
 }
 
-const createTableRow = (cells) => {
+const createTableRow = () => {
 	let row = createDomDiv()
 	row.style.display = "flex"
 	row.style.flexDirection = "row"
+	return row
+}
+
+const createTableRowFrom = (cells) => {
+	let row = createTableRow()
 	for (let cell of cells) {
 		let domCell = addDomTo(row, createTableCell(cell))
 	}
 	return row
 }
 
-const createTableFromRows = (rows) => {
+const createTable = () => {
 	let table = createDomDiv()
 	table.style.display = "flex"
 	table.style.flexDirection = "column"
-	for (let row of rows) {
-		let domRow = addDomTo(table, createTableRow(row))
-	}
 	return table
 }
 
+const createMath = (expr) => {
+	let div = document.createElement("code")
+	div.innerHTML = expr
+	return div
+}
+
 const createTable2x2 = (vo, vn, uo, un) => {
-	let table = createTableFromRows([
-		["", "Outcome", "No Outcome"],
-		["Vaccinated", vo, vn],
-		["Unvaccinated", uo, un],
-	])
+	let table = createTable()
+
+	const addRow = (cell1String, cell2Content, cell3Content) => {
+		let row = addDomTo(table, createTableRow())
+		let cell1 = addDomTo(row, createTableCell(cell1String))
+		cell1.style.textAlign = "right"
+		let cell2 = addDomTo(row, createTableCell(cell2Content))
+		cell2.style.textAlign = "center"
+		let cell3 = addDomTo(row, createTableCell(cell3Content))
+		cell3.style.textAlign = "center"
+	}
+
+	addRow("", "Outcome", "No Outcome")
+	addRow("Vaccinated", createMath(vo), createMath(vn))
+	addRow("Unvaccinated", createMath(uo), createMath(un))
+
 	return table
 }
 
@@ -699,6 +724,7 @@ const addDomSlideWithTitle = (titleContent) => {
 	slide.style.flexDirection = "column"
 
 	let title = addDomTo(slide, createDomTitle(titleContent))
+	title.style.whiteSpace = "nowrap"
 
 	let mainContentScroll = addDomDivTo(slide)
 	mainContentScroll.style.height = `calc(100vh - ${globalSlideTitleHeight}px)`
@@ -837,7 +863,7 @@ const slideBack = () => switchInSlide(globalState.slideState[globalState.current
 	let plot = createORPlot()
 	addPointsToLastSlide(slide, [
 		table,
-		"or = (1-ve)*(1-p) / (1-p*(1-ve))",
+		createMath("or = (1-ve)*(1-p) / (1-p*(1-ve))"),
 		plot
 	])
 }
