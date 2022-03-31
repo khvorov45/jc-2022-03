@@ -289,6 +289,12 @@ const createPlotGrid = (xTicks, yTicks, scaleX, scaleY) => {
 	return container
 }
 
+const setSvgDim = (svg, width, height) => {
+	setSvgAttribute(svg, "viewBox", `0 0 ${width} ${height}`)
+	setSvgAttribute(svg, "width", width)
+	setSvgAttribute(svg, "height", height)
+}
+
 const createORPlot = () => {
 	let container = createDomDiv()
 	container.style.display = "flex"
@@ -386,11 +392,10 @@ const createFullORPlot = () => {
 	plot.style.flexShrink = "0"
 	plot.style.display = "block"
 
-	let width = window.innerWidth * 0.9
+	const getPlotWidth = () => window.innerWidth * 0.9
+	let width = getPlotWidth()
 	let height = 400
-	setSvgAttribute(plot, "viewBox", `0 0 ${width} ${height}`)
-	setSvgAttribute(plot, "width", width)
-	setSvgAttribute(plot, "height", height)
+	setSvgDim(plot, width, height)
 
 	let pads = {
 		axis: {t: 20, l: 20, r: 40, b: 30},
@@ -626,6 +631,12 @@ const createFullORPlot = () => {
 		case ".": {xAxisMax = clamp(xAxisMax - 0.1, xAxisMin + 0.1, 1); redrawLinesAndGrid()}; break
 		case ">": {xAxisMax = clamp(xAxisMax + 0.1, xAxisMin + 0.1, 1); redrawLinesAndGrid()}; break
 		}
+	})
+
+	window.addEventListener("resize", (e) => {
+		width = getPlotWidth();
+		setSvgDim(plot, width, height);
+		redrawLinesAndGrid()
 	})
 
 	sliders[xlab].style.background = "var(--color-selected)"
