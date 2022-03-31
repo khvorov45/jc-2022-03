@@ -325,7 +325,7 @@ const createORPlot = () => {
 	))
 
 	let veTrue = 0.40
-	let veLineCol = "#bbbb11"
+	let veLineCol = "#aaaaaa"
 	let rrLineCol = "#11bbbb"
 
 	const addVELine = () => {
@@ -356,7 +356,7 @@ const createORPlot = () => {
 	const orFunVE = (ve) => orFunFull(ve, pUnvac)
 	const orFunP = (p) => orFunFull(veTrue, p)
 
-	let orLineCol = "#aaaaaa"
+	let orLineCol = "#bbbb11"
 	let addORLine = () => {
 		let line = addDomTo(plot, createLabelledFunLine(0.001, 1, orFunP, scaleX, scaleY, 0, 1, orLineCol, "or"))
 		return line
