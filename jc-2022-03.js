@@ -85,16 +85,20 @@ const createDomSlide = (content) => {
 	div.style.display = "flex"
 	div.style.width = "100vw"
 	div.style.height = "100vh"
-	div.style.justifyContent = "center"
-	div.style.alignItems = "center"
 	return div
 }
 
+let globalSlideTitleHeight = 50
 const createDomTitle = (title) => {
 	let domTitle = createDomDiv()
 	domTitle.innerHTML = title
 	domTitle.style.fontSize = "xx-large"
-	domTitle.style.textAlign = "left"
+	domTitle.style.display = "flex"
+	domTitle.style.alignItems = "center"
+	domTitle.style.textAlign = "center"
+	domTitle.style.height = `${globalSlideTitleHeight}px`
+	domTitle.style.paddingLeft = "10px"
+	domTitle.style.paddingRight = "10px"
 	return domTitle
 }
 
@@ -102,14 +106,10 @@ const createDomTitleSubtitle = (title, subtitle) => {
 	let domContainer = createDomDiv()
 	domContainer.style.display = "flex"
 	domContainer.style.flexDirection = "column"
-	domContainer.style.justifyContent = "center"
+	domContainer.style.justifyContent = "space-around"
 	domContainer.style.alignItems = "center"
 
-	let domTitle = addDomDivTo(domContainer)
-	domTitle.innerHTML = title
-	domTitle.style.fontSize = "xx-large"
-	domTitle.style.textAlign = "center"
-	domTitle.style.marginBottom = "50px"
+	let domTitle = addDomTo(domContainer, createDomTitle(title))
 
 	let domSubtitle = addDomDivTo(domContainer)
 	domSubtitle.innerHTML = subtitle
@@ -386,7 +386,7 @@ const createFullORPlot = () => {
 	plot.style.flexShrink = "0"
 	plot.style.display = "block"
 
-	let width = window.innerWidth * 0.75
+	let width = window.innerWidth * 0.9
 	let height = 400
 	setSvgAttribute(plot, "viewBox", `0 0 ${width} ${height}`)
 	setSvgAttribute(plot, "width", width)
@@ -575,10 +575,15 @@ const createFullORPlot = () => {
 		}
 	}
 
-	let slidersContainer = addDomDivTo(container)
+	let slidersScrollContainer = addDomDivTo(container)
+	slidersScrollContainer.style.height = `calc(100vh - ${globalSlideTitleHeight + height}px)`
+	slidersScrollContainer.style.overflowY = "scroll"
+
+	let slidersContainer = addDomDivTo(slidersScrollContainer)
 	slidersContainer.style.display = "flex"
 	slidersContainer.style.flexDirection = "row"
 	slidersContainer.style.flexWrap = "wrap"
+	slidersContainer.style.justifyContent = "center"
 
 	let sliders = {}
 
@@ -607,7 +612,7 @@ const createFullORPlot = () => {
 	const redrawLinesAndGrid = () => {
 		scaleX = createScaleX()
 		scaleY = createScaleY()
-		
+
 		plot.removeChild(plotGridEl)
 		plotGridEl = addPlotGrid()
 
@@ -662,14 +667,18 @@ const addDomSlide = () => {
 
 const addDomSlideWithTitle = (titleContent) => {
 	let slide = addDomSlide()
-	let slideContent = addDomDivTo(slide)
-	slideContent.style.display = "flex"
-	slideContent.style.flexDirection = "column"
-	slideContent.style.width = "90vw"
-	slideContent.style.height = "90vh"
-	let title = addDomTo(slideContent, createDomTitle(titleContent))
-	title.style.marginBottom = "25px"
-	let mainContent = addDomDivTo(slideContent)
+	slide.style.flexDirection = "column"
+
+	let title = addDomTo(slide, createDomTitle(titleContent))
+
+	let mainContentScroll = addDomDivTo(slide)
+	mainContentScroll.style.height = `calc(100vh - ${globalSlideTitleHeight}px)`
+	mainContentScroll.style.overflowY = "scroll"
+
+	let mainContent = addDomDivTo(mainContentScroll)
+	mainContent.style.paddingLeft = "10px"
+	mainContent.style.paddingRight = "10px"
+
 	return mainContent
 }
 
@@ -716,6 +725,7 @@ const slideBack = () => switchInSlide(globalState.slideState[globalState.current
 // NOTE(sen) Title slide
 {
 	let slide = addDomSlide()
+	slide.style.justifyContent = "center"
 	let domTitleSubtitle = addDomTo(
 		slide,
 		createDomTitleSubtitle(
@@ -812,6 +822,7 @@ const slideBack = () => switchInSlide(globalState.slideState[globalState.current
 // NOTE(sen) End slide
 {
 	let slide = addDomSlide()
+	slide.style.justifyContent = "center"
 	let domTitleSubtitle = addDomTo(
 		slide,
 		createDomTitleSubtitle(
