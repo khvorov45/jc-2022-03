@@ -434,6 +434,9 @@ const createFullORPlot = () => {
 	params.pOther = 0.3
 	params.pHealthVac = 1
 	params.pHealthUnvac = 1
+	params.rrInfOther = 1
+	params.pUninfVac = 1
+	params.pUninfUnvac = 1
 	params.sens = 1
 	params.spec = 1
 
@@ -471,15 +474,18 @@ const createFullORPlot = () => {
 		let pOther = params.pOther
 		let pHealthUnvac = params.pHealthVac
 		let pHealthVac = params.pHealthUnvac
+		let rrInfOther = params.rrInfOther
+		let pUninfVac = params.pUninfVac
+		let pUninfUnvac = params.pUninfUnvac
 
-		let pVacInf = pInf * (1 - veInf)
+		let pVacInf = pInf * (1 - veInf) * rrInfOther
 		let pVacSympt = pSympt * (1 - veSympt)
 
-		let caseVac = v * pVacInf * (pVacSympt + (1 - pVacSympt) * pOther) * pHealthVac
-		let caseUnvac = (1 - v) * pInf * (pSympt + (1 - pSympt) * pOther) * pHealthUnvac
+		let caseVac = v * pVacInf * (pVacSympt + (1 - pVacSympt) * pOther) * pHealthVac * pUninfVac
+		let caseUnvac = (1 - v) * pInf * (pSympt + (1 - pSympt) * pOther) * pHealthUnvac * pUninfUnvac
 
-		let controlCommunityVac = v * (1 - (pOther + (1 - pOther) * pVacInf * pVacSympt) * pHealthVac)
-		let controlCommunityUnvac = (1 - v) * (1 - (pOther + (1 - pOther) * pInf * pSympt) * pHealthUnvac)
+		let controlCommunityVac = v * (1 - (pOther + (1 - pOther) * pVacInf * pVacSympt * pUninfVac) * pHealthVac)
+		let controlCommunityUnvac = (1 - v) * (1 - (pOther + (1 - pOther) * pInf * pSympt * pUninfUnvac) * pHealthUnvac)
 
 		let controlNegVac = v * pOther * (1 - pVacInf) * pHealthVac
 		let controlNegUnvac = (1 - v) * pOther * (1 - pInf) * pHealthUnvac
@@ -592,6 +598,9 @@ const createFullORPlot = () => {
 	addSlider("pOther", 0.00001, 0.5)
 	addSlider("pHealthVac", 0.00001, 1)
 	addSlider("pHealthUnvac", 0.00001, 1)
+	addSlider("rrInfOther", 0.5, 1.5)
+	addSlider("pUninfVac", 0, 1)
+	addSlider("pUninfUnvac", 0, 1)
 	addSlider("sens", 0.5, 1)
 	addSlider("spec", 0.5, 1)
 
