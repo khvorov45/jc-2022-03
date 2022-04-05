@@ -456,7 +456,7 @@ const createFullORPlot = () => {
 	setSvgDim(plot, width, height)
 
 	let pads = {
-		axis: {t: 20, l: 35, r: 40, b: 30},
+		axis: {t: 20, l: 35, r: 50, b: 30},
 		data: {t: 20, l: 20, r: 20, b: 20},
 	}
 
