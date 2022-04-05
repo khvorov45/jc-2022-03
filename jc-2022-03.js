@@ -228,8 +228,13 @@ const createLabelledLine = (x1, x2, y1, y2, col, lab) => {
 const createLabelledVLine = (x, y1, y2, col, lab) => createLabelledLine(x, x, y1, y2, col, lab)
 const createLabelledHLine = (x1, x2, y, col, lab) => createLabelledLine(x1, x2, y, y, col, lab)
 
-const createFunLine = (from, to, fun, scaleX, scaleY, ymin, ymax, col) => {
+const createFunLine = (from, to, fun, scaleX, scaleY, ymin, ymax, col, lastInBounds) => {
 	const container = createSvgElement("g")
+
+	if (lastInBounds !== undefined) {
+		lastInBounds.x = scaleX(to)
+		lastInBounds.y = scaleY(fun(to))
+	}
 
 	if (to !== from) {
 		if (to < from) {
@@ -238,23 +243,48 @@ const createFunLine = (from, to, fun, scaleX, scaleY, ymin, ymax, col) => {
 			from = temp
 		}
 
-		let last = scaleX(from)
-		let lastY = scaleY(fun(from))
+		let lastOg = from
+		let lastScaled = scaleX(from)
+		let lastYOg = fun(from)
+		let lastYScaled = scaleY(lastYOg)
 		let step = (to - from) / 100
 		let current = from + step
-		for (; current < to; current += step) {
+		let breakAfter = false
+		for (; !breakAfter; current += step) {
+			if (current >= to) {
+				current = to
+				breakAfter = true
+			}
 			let currentScaled = scaleX(current)
 			let currentY = fun(current)
 			let currentYScaled = scaleY(currentY)
-			if (currentY > ymin && currentY < ymax) {
-				addDomTo(container, createLine(last, currentScaled, lastY, currentYScaled, col))
+			if (currentY >= ymin && currentY <= ymax) {
+				addDomTo(container, createLine(lastScaled, currentScaled, lastYScaled, currentYScaled, col))
+				if (lastInBounds !== undefined) {
+					lastInBounds.x = currentScaled
+					lastInBounds.y = currentYScaled
+				}
+			} else if (lastYOg >= ymin && lastYOg <= ymax) {
+				let lerpFactor = 1
+				if (currentY > ymax) {
+					lerpFactor = (ymax - lastYOg) / (currentY - lastYOg)
+				} else if (currentY < ymin) {
+					lerpFactor = (lastYOg - ymin) / (currentY - lastYOg)
+				}
+				lerpFactor = clamp(lerpFactor, 0, 1)
+				let currentLerped = lastOg + lerpFactor * step
+				let currentLerpedScaled = scaleX(currentLerped)
+				let currentYLerpedScaled = scaleY(fun(currentLerped))
+				addDomTo(container, createLine(lastScaled, currentLerpedScaled, lastYScaled, currentYLerpedScaled, col))
+				if (lastInBounds !== undefined) {
+					lastInBounds.x = currentLerpedScaled
+					lastInBounds.y = currentYLerpedScaled
+				}
 			}
-			last = currentScaled
-			lastY = currentYScaled
-		}
-
-		if (current !== from) {
-			addDomTo(container, createLine(last, scaleX(to), lastY, scaleY(fun(to)), col))
+			lastOg = current
+			lastScaled = currentScaled
+			lastYOg = currentY
+			lastYScaled = currentYScaled
 		}
 	}
 
@@ -263,8 +293,9 @@ const createFunLine = (from, to, fun, scaleX, scaleY, ymin, ymax, col) => {
 
 const createLabelledFunLine = (from, to, fun, scaleX, scaleY, ymin, ymax, col, lab, vAlign) => {
 	let container = createSvgElement("g")
-	addDomTo(container, createFunLine(from, to, fun, scaleX, scaleY, ymin, ymax, col))
-	addDomTo(container, createSvgText(scaleX(to), scaleY(fun(to)), lab, col, "start", vAlign))
+	let lastInBounds = {}
+	addDomTo(container, createFunLine(from, to, fun, scaleX, scaleY, ymin, ymax, col, lastInBounds))
+	addDomTo(container, createSvgText(lastInBounds.x, lastInBounds.y, lab, col, "start", vAlign))
 	return container
 }
 
@@ -475,6 +506,7 @@ const createFullORPlot = () => {
 	params.pUninfUnvac = 1
 	params.sens = 1
 	params.spec = 1
+	params.pInfDouble = 0
 
 	let veLineCol = "#bbbbbb"
 
@@ -513,18 +545,19 @@ const createFullORPlot = () => {
 		let rrInfOther = params.rrInfOther
 		let pUninfVac = params.pUninfVac
 		let pUninfUnvac = params.pUninfUnvac
+		let pInfDouble = params.pInfDouble
 
 		let pVacInf = pInf * (1 - veInf) * rrInfOther
 		let pVacSympt = pSympt * (1 - veSympt)
 
-		let caseVac = v * pVacInf * (pVacSympt + (1 - pVacSympt) * pOther) * pHealthVac * pUninfVac
-		let caseUnvac = (1 - v) * pInf * (pSympt + (1 - pSympt) * pOther) * pHealthUnvac * pUninfUnvac
+		let caseVac = v * pVacInf * (pVacSympt + (1 - pVacSympt) * pOther * pInfDouble) * pHealthVac * pUninfVac
+		let caseUnvac = (1 - v) * pInf * (pSympt + (1 - pSympt) * pOther * pInfDouble) * pHealthUnvac * pUninfUnvac
 
-		let controlCommunityVac = v * (1 - (pOther + (1 - pOther) * pVacInf * pVacSympt * pUninfVac) * pHealthVac)
-		let controlCommunityUnvac = (1 - v) * (1 - (pOther + (1 - pOther) * pInf * pSympt * pUninfUnvac) * pHealthUnvac)
+		let controlCommunityVac = v * (1 - (pOther + (1 - pOther * pInfDouble) * pVacInf * pVacSympt * pUninfVac) * pHealthVac)
+		let controlCommunityUnvac = (1 - v) * (1 - (pOther + (1 - pOther * pInfDouble) * pInf * pSympt * pUninfUnvac) * pHealthUnvac)
 
-		let controlNegVac = v * pOther * (1 - pVacInf) * pHealthVac
-		let controlNegUnvac = (1 - v) * pOther * (1 - pInf) * pHealthUnvac
+		let controlNegVac = v * pOther * (1 - pVacInf * pInfDouble) * pHealthVac
+		let controlNegUnvac = (1 - v) * pOther * (1 - pInf * pInfDouble) * pHealthUnvac
 
 		return {
 			caseVac: caseVac,
@@ -550,6 +583,16 @@ const createFullORPlot = () => {
 		let props = getExpectedProportions(params)
 		let veEst = getVEFrom2x2(
 			props.caseVac, props.controlCommunityVac, props.caseUnvac, props.controlCommunityUnvac,
+			params.sens, params.spec
+		)
+		return veEst
+	}
+
+	const veCCGenFunFull = (params) => {
+		let props = getExpectedProportions(params)
+		let veEst = getVEFrom2x2(
+			props.caseVac, props.controlNegVac + props.controlCommunityVac, 
+			props.caseUnvac, props.controlNegUnvac + props.controlCommunityUnvac,
 			params.sens, params.spec
 		)
 		return veEst
@@ -581,21 +624,26 @@ const createFullORPlot = () => {
 	}
 
 	let veCCLineCol = "#61de2a"
+	let veCCGenLineCol = "#e1e114"
 	let veTNLineCol = "#ff69b4"
 
-	let addVECCLine = () => addVEEstLine(veCCFunFull, veCCLineCol, "cc", "hanging")
+	let addVECCLine = () => addVEEstLine(veCCFunFull, veCCLineCol, "cc(hlth)", "hanging")
+	let addVECCGenLine = () => addVEEstLine(veCCGenFunFull, veCCGenLineCol, "cc(gen)", "middle")
 	let addVETNLine = () => addVEEstLine(veTNFunFull, veTNLineCol, "tn", "text-bottom")
 
 	let veCCLineEl = addVECCLine()
+	let veCCGenLineEl = addVECCGenLine()
 	let veTNLineEl = addVETNLine()
 
 	const redrawLines = () => {
 		plot.removeChild(veLineEl)
 		plot.removeChild(veCCLineEl)
+		plot.removeChild(veCCGenLineEl)
 		plot.removeChild(veTNLineEl)
 		plot.removeChild(xlabEl)
 		veLineEl = addVELine()
 		veCCLineEl = addVECCLine()
+		veCCGenLineEl = addVECCGenLine()
 		veTNLineEl = addVETNLine()
 		xlabEl = addXLab()
 	}
@@ -638,6 +686,7 @@ const createFullORPlot = () => {
 	addSlider("pInfUnvac", 0.00001, 0.5)
 	addSlider("pSymptUnvac", 0.00001, 1)
 	addSlider("pOther", 0.00001, 0.5)
+	addSlider("pInfDouble", 0, 1)
 	addSlider("pHealthVac", 0.00001, 1)
 	addSlider("pHealthUnvac", 0.00001, 1)
 	addSlider("rrInfOther", 0.5, 1.5)
